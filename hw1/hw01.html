@@ -14759,7 +14759,7 @@ bitstring(x * (1 / a)) = &#34;00111111110100110011001100110011001100110011001100
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><code>g(5.0)</code> needs more steps than <code>g(5)</code> due to floating-point arithmetics.</p>
+<p><code>g(5.0)</code> needs more steps than <code>g(5)</code> due to floating-point arithmetics, where the usual associative and distributive laws are not obeyed.</p>
 
 </div>
 </div>
@@ -14885,7 +14885,7 @@ bitstring(x * (1 / a)) = &#34;00111111110100110011001100110011001100110011001100
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p><code>@fastmath</code> allows <a href="https://docs.julialang.org/en/v1.0.0/base/math/#Base.FastMath.@fastmath">execution of a transformed version of the expression</a>, which calls functions that may violate strict IEEE semantics, while allowing the fastest possible operation.</p>
+<p><code>@fastmath</code> allows <a href="https://docs.julialang.org/en/v1.0.0/base/math/#Base.FastMath.@fastmath">execution of a transformed version of the expression</a>, which calls functions that may violate strict IEEE semantics, while allowing the fastest possible operation. In this case, the floating-point number arithmetic is computed in a similar manner to the integer arithmetic, ignoring the associative and distributive laws.</p>
 
 </div>
 </div>
@@ -15201,7 +15201,7 @@ M2013.79 216.178 L2286.63 216.178 L2286.63 95.2176 L2013.79 95.2176  Z
 <ol>
 <li>Explain what you found.</li>
 </ol>
-<p>Although the same results should be obtained, the first operation requires many more computations for <code>Float64</code>, which results in numerical instability due to finite precision.</p>
+<p>Although the equivalent results should be obtained, the first operation requires many more computations for <code>Float64</code>, which results in numerical instability due to finite precision, particularly catastrophic cancellation.</p>
 
 </div>
 </div>
@@ -15221,10 +15221,8 @@ where $\mathbf{A} \in \mathbb{R}^{n \times n}$ is nonsingular and $\mathbf{u} \i
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 <p>Given the uniqueness of matrix inverse, it suffices to show that the matrix multiplication leads to $\mathbf{I}_{n}$:</p>
 $$
-(\mathbf{A} + \mathbf{u} \mathbf{u}^T)(\mathbf{A} + \mathbf{u} \mathbf{u}^T)^{-1} = \mathbf{I}_{n} + \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} - \frac{\mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} + \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1}}{1 + \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u}}
-$$$$
-= \mathbf{I}_{n} + \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} - \frac{\mathbf{u} \left( 1 + \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u} \right) \mathbf{u}^T \mathbf{A}^{-1}}{1 + \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u}}
-$$$$
+(\mathbf{A} + \mathbf{u} \mathbf{u}^T)(\mathbf{A} + \mathbf{u} \mathbf{u}^T)^{-1} = \mathbf{I}_{n} + \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} - \frac{\mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} + \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1}}{1 + \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u}} \\
+= \mathbf{I}_{n} + \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} - \frac{\mathbf{u} \left( 1 + \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u} \right) \mathbf{u}^T \mathbf{A}^{-1}}{1 + \mathbf{u}^T \mathbf{A}^{-1} \mathbf{u}} \\
 = \mathbf{I}_{n} + \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} - \mathbf{u} \mathbf{u}^T \mathbf{A}^{-1} = \mathbf{I}_{n}
 $$
 </div>
@@ -15244,12 +15242,9 @@ where $\mathbf{A} \in \mathbb{R}^{n \times n}$ is nonsingular, $\mathbf{U}, \mat
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 $$
-(\mathbf{A} + \mathbf{U} \mathbf{V}^T)(\mathbf{A} + \mathbf{U} \mathbf{V}^T)^{-1} = \mathbf{I}_{n} + \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1}
-$$$$
-= \mathbf{I}_{n} + \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} [(\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1}] \mathbf{V}^T \mathbf{A}^{-1}
-$$$$
-= \mathbf{I}_{n} + \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U}) (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1}
-$$$$
+(\mathbf{A} + \mathbf{U} \mathbf{V}^T)(\mathbf{A} + \mathbf{U} \mathbf{V}^T)^{-1} = \mathbf{I}_{n} + \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} \\
+= \mathbf{I}_{n} + \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} [(\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1}] \mathbf{V}^T \mathbf{A}^{-1} \\
+= \mathbf{I}_{n} + \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U}) (\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} \\
 = \mathbf{I}_{n} + \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{V}^T \mathbf{A}^{-1} = \mathbf{I}_{n}
 $$
 </div>
@@ -15269,12 +15264,9 @@ where $\mathbf{A}$ and $\mathbf{B}$ are nonsingular.</li>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 $$
-(\mathbf{A} + \mathbf{U} \mathbf{B} \mathbf{V}^T)(\mathbf{A} + \mathbf{U} \mathbf{B} \mathbf{V}^T)^{-1} = \mathbf{I}_{n} + \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1}
-$$$$
-= \mathbf{I}_{n} + \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} [(\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} + \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1}] \mathbf{V}^T \mathbf{A}^{-1}
-$$$$
-= \mathbf{I}_{n} + \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{B} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U}) (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1}
-$$$$
+(\mathbf{A} + \mathbf{U} \mathbf{B} \mathbf{V}^T)(\mathbf{A} + \mathbf{U} \mathbf{B} \mathbf{V}^T)^{-1} = \mathbf{I}_{n} + \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} \\
+= \mathbf{I}_{n} + \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} [(\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} + \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1}] \mathbf{V}^T \mathbf{A}^{-1} \\
+= \mathbf{I}_{n} + \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{B} (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U}) (\mathbf{B}^{-1} + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})^{-1} \mathbf{V}^T \mathbf{A}^{-1} \\
 = \mathbf{I}_{n} + \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} - \mathbf{U} \mathbf{B} \mathbf{V}^T \mathbf{A}^{-1} = \mathbf{I}_{n}
 $$
 </div>
@@ -15295,8 +15287,7 @@ This formula is useful for evaluating the density of a multivariate normal with 
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 $$
-\text{det}(\mathbf{A} + \mathbf{U} \mathbf{V}^T) = \text{det}(\mathbf{A}) \text{det}(\mathbf{I}_n + \mathbf{A}^{-1} \mathbf{U} \mathbf{V}^T)
-$$$$
+\text{det}(\mathbf{A} + \mathbf{U} \mathbf{V}^T) = \text{det}(\mathbf{A}) \text{det}(\mathbf{I}_n + \mathbf{A}^{-1} \mathbf{U} \mathbf{V}^T) \\
 \begin{bmatrix}
 \mathbf{I}_n &amp;
 \mathbf{0}_{n \times m} \\
@@ -15320,11 +15311,9 @@ $$$$
 \mathbf{A}^{-1} \mathbf{U}  \\
 \mathbf{0}_{m \times m} &amp;
 \mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U}
-\end{bmatrix}
-$$$$
+\end{bmatrix} \\
 \therefore \text{det}(\mathbf{I}_n + \mathbf{A}^{-1} \mathbf{U} \mathbf{V}^T) = 
-\text{det}(\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U}),
-$$$$
+\text{det}(\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U}), \\
 \text{det}(\mathbf{A} + \mathbf{U} \mathbf{V}^T) = \text{det}(\mathbf{A}) \text{det}(\mathbf{I}_m + \mathbf{V}^T \mathbf{A}^{-1} \mathbf{U})
 $$
 </div>
