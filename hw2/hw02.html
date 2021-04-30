@@ -14341,9 +14341,9 @@ $$
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 $$
 \ell = - \frac{n_i}{2} \log 2\pi - 
-\frac 12 \log \text{det}
+\frac{1}{2} \log \text{det}
 (\sigma^2 \mathbf{I}_{n_i} + \mathbf{Z}_i \boldsymbol{\Sigma}_{q \times q} \mathbf{Z}_i^T) - 
-\frac 12 (\boldsymbol{y}_i - \mathbf{X}_i \boldsymbol{\beta})^T  
+\frac{1}{2} (\boldsymbol{y}_i - \mathbf{X}_i \boldsymbol{\beta})^T  
 (\sigma^2 \mathbf{I}_{n_i} + \mathbf{Z}_i \boldsymbol{\Sigma}_{q \times q} \mathbf{Z}_i^T)^{-1} (\boldsymbol{y}_i - \mathbf{X}_i \boldsymbol{\beta})
 $$
 </div>
@@ -14373,7 +14373,7 @@ $$
 $$
 \therefore \ell = - \frac{n_i}{2} \log 2\pi - 
 \frac{n_i}{2} \log \sigma^2 -
-\frac 12 \log \text{det}(\mathbf{M}) - 
+\frac{1}{2} \log \text{det}(\mathbf{M}) - 
 \frac{1}{2\sigma^2} \boldsymbol{r}_i^T  
 (\mathbf{I}_{n_i} - \frac{1}{\sigma^2} \mathbf{Z}_i \mathbf{L} \mathbf{M}^{-1} \mathbf{L}^T \mathbf{Z}_i^T)
 \boldsymbol{r}_i
@@ -14493,8 +14493,7 @@ $$
     <span class="n">detM</span> <span class="o">=</span> <span class="n">n</span> <span class="o">/</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">log</span><span class="p">(</span><span class="n">σ²</span><span class="p">)</span> <span class="o">+</span> <span class="n">logdet</span><span class="p">(</span><span class="kt">UpperTriangular</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">M</span><span class="p">))</span>
     
     <span class="c"># compute rᵗr = yᵗy - 2βᵗXᵗy + βᵗXᵗXβ</span>
-    <span class="n">BLAS</span><span class="o">.</span><span class="n">gemv!</span><span class="p">(</span><span class="sc">&#39;N&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">xtx</span><span class="p">,</span> <span class="n">β</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">XᵗXβ</span><span class="p">)</span>  <span class="c"># mul!</span>
-    <span class="c"># similar to mul!(obs.XᵗXβ, obs.xtx, β)</span>
+    <span class="n">BLAS</span><span class="o">.</span><span class="n">gemv!</span><span class="p">(</span><span class="sc">&#39;N&#39;</span><span class="p">,</span> <span class="mf">1.0</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">xtx</span><span class="p">,</span> <span class="n">β</span><span class="p">,</span> <span class="mf">0.0</span><span class="p">,</span> <span class="n">obs</span><span class="o">.</span><span class="n">XᵗXβ</span><span class="p">)</span>
     <span class="n">rᵗr</span> <span class="o">=</span> <span class="n">obs</span><span class="o">.</span><span class="n">yty</span> <span class="o">-</span> <span class="mi">2</span> <span class="o">*</span> <span class="n">dot</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">xty</span><span class="p">,</span> <span class="n">β</span><span class="p">)</span> <span class="o">+</span> <span class="n">dot</span><span class="p">(</span><span class="n">obs</span><span class="o">.</span><span class="n">XᵗXβ</span><span class="p">,</span> <span class="n">β</span><span class="p">)</span>
     
     <span class="c"># compute rᵗZLM⁻¹LᵗZᵗr</span>
@@ -14550,6 +14549,7 @@ $$
 </ul>
 
 <pre><code>LAPACK.potrf!('U', obs.M) ≈ cholesky!(Symmetric(obs.M)) 
+BLAS.gemv!('N', 1.0, obs.xtx, β, 0.0, obs.XᵗXβ) ≈ mul!(obs.XᵗXβ, obs.xtx, β)
 BLAS.gemv!('N', -1.0, obs.ztx, β, 1.0, obs.LᵗZᵗr) ≈ mul!(obs.LᵗZᵗr, obs.ztx, β, 1.0, -1.0)
 BLAS.trsv!('U', 'T', 'N', obs.M, obs.LᵗZᵗr) ≈ ldiv!(transpose(UpperTriangular(obs.M)), obs.LᵗZᵗr)</code></pre>
 
@@ -14744,12 +14744,12 @@ BLAS.trsv!('U', 'T', 'N', obs.M, obs.LᵗZᵗr) ≈ ldiv!(transpose(UpperTriangu
   memory estimate:  30.55 MiB
   allocs estimate:  5
   --------------
-  minimum time:     8.768 ms (0.00% GC)
-  median time:      9.858 ms (0.00% GC)
-  mean time:        10.717 ms (15.14% GC)
-  maximum time:     16.409 ms (28.69% GC)
+  minimum time:     8.787 ms (0.00% GC)
+  median time:      9.184 ms (0.00% GC)
+  mean time:        10.164 ms (14.95% GC)
+  maximum time:     15.262 ms (31.44% GC)
   --------------
-  samples:          466
+  samples:          492
   evals/sample:     1</pre>
 </div>
 
@@ -14793,13 +14793,13 @@ BLAS.trsv!('U', 'T', 'N', obs.M, obs.LᵗZᵗr) ≈ ldiv!(transpose(UpperTriangu
   memory estimate:  0 bytes
   allocs estimate:  0
   --------------
-  minimum time:     661.085 ns (0.00% GC)
-  median time:      683.739 ns (0.00% GC)
-  mean time:        780.084 ns (0.00% GC)
-  maximum time:     2.623 μs (0.00% GC)
+  minimum time:     646.048 ns (0.00% GC)
+  median time:      666.030 ns (0.00% GC)
+  mean time:        711.508 ns (0.00% GC)
+  maximum time:     2.760 μs (0.00% GC)
   --------------
   samples:          10000
-  evals/sample:     153</pre>
+  evals/sample:     165</pre>
 </div>
 
 </div>
