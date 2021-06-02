@@ -14480,7 +14480,7 @@ The above expressions for $\text{D}_{\text{vech} \mathbf{L}} \ell_i$ are equival
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 \begin{eqnarray*}
 \text{d} (\nabla_{\sigma^2} \ell_i) &amp;=&amp; \frac{1}{2} \text{tr} (\boldsymbol{\Omega}_i^{-1} \text{d} \boldsymbol{\Omega}_i \boldsymbol{\Omega}_i^{-1}) - \frac{1}{2} \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \text{d} \boldsymbol{\Omega}_i \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i - \frac{1}{2} \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \text{d} \boldsymbol{\Omega}_i \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i  \\
-&amp;=&amp; \frac{1}{2} \text{tr} (\boldsymbol{\Omega}_i^{-2} \text{d} \sigma^2) - \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-3} \mathbf{r}_i \text{d} \sigma^2 (\because \text{d}\boldsymbol{\Omega}_i = \text{d} \sigma^2 \mathbf I) \\
+&amp;=&amp; \frac{1}{2} \text{tr} (\boldsymbol{\Omega}_i^{-2} \text{d} \sigma^2) - \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-3} \mathbf{r}_i \text{d} \sigma^2 \quad (\because \text{d}\boldsymbol{\Omega}_i = \text{d} \sigma^2 \mathbf I) \\
 \therefore \nabla^2_{\boldsymbol{\sigma}^2} \ell_i &amp;=&amp; \frac{\partial^2}{(\partial \sigma^2)^2} \ell_i = \frac{1}{2} \text{tr} (\boldsymbol{\Omega}_i^{-2}) - \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-3} \mathbf{r}_i \rightarrow \mathbb{E} [- \nabla^2_{\boldsymbol{\sigma}^2} \ell_i] = - \frac{1}{2} \text{tr} (\boldsymbol{\Omega}_i^{-2}) + \text{tr} (\boldsymbol{\Omega}_i^{-2}) = \frac{1}{2} \text{tr} (\boldsymbol{\Omega}_i^{-2})
 \end{eqnarray*}
 </div>
@@ -14489,10 +14489,10 @@ The above expressions for $\text{D}_{\text{vech} \mathbf{L}} \ell_i$ are equival
 </div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
 \begin{eqnarray*}
 \text{d} (\nabla_{\sigma^2} \ell_i) &amp;=&amp; \frac{1}{2} \text{tr} (\boldsymbol{\Omega}_i^{-1} \text{d} \boldsymbol{\Omega}_i \boldsymbol{\Omega}_i^{-1}) - \frac{1}{2} \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \text{d} \boldsymbol{\Omega}_i \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i - \frac{1}{2} \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \text{d} \boldsymbol{\Omega}_i \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i  \\
-&amp;=&amp; \text{tr} (\mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \text{d} \mathbf{L} - \frac{1}{2} \mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \text{d} \mathbf{L} - \frac{1}{2} \mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \text{d} \mathbf{L}) \\
-&amp;=&amp; \text{vec} (\mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \frac{1}{2} \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \frac{1}{2} \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \mathbf{L})^T \mathbf{D}_q \text{dvech} \mathbf{L} \\
-\therefore \frac{\partial^2}{\partial (\text{vech} \mathbf{L})^T \partial \sigma^2} \ell_i &amp;=&amp; \text{vec} (\mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \frac{1}{2} \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \frac{1}{2} \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \mathbf{L})^T \mathbf{D}_q \\ 
-&amp;\rightarrow&amp; \mathbb{E}[- \frac{\partial^2}{\partial (\text{vech} \mathbf{L})^T \partial \sigma^2} \ell_i] = \mathbf{0}_{1 \times \frac{q(q+1)}{2}} (\because \mathbb{E}[\mathbf{r}_i \mathbf{r}_i^T] = \boldsymbol{\Omega}_i)
+&amp;=&amp; \text{tr} (\mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \text{d} \mathbf{L} - \mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \text{d} \mathbf{L} - \mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \text{d} \mathbf{L}) \\
+&amp;=&amp; \text{vec} (\mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \mathbf{L})^T \mathbf{D}_q \text{dvech} \mathbf{L} \\
+\therefore \frac{\partial^2}{\partial (\text{vech} \mathbf{L})^T \partial \sigma^2} \ell_i &amp;=&amp; \text{vec} (\mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L} - \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \mathbf{L})^T \mathbf{D}_q \\ 
+&amp;\rightarrow&amp; \mathbb{E}[- \frac{\partial^2}{\partial (\text{vech} \mathbf{L})^T \partial \sigma^2} \ell_i] = \text{vec}(\mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-2} \mathbf{Z}_i \mathbf{L})^T \mathbf{D}_q \quad (\because \mathbb{E}[\mathbf{r}_i \mathbf{r}_i^T] = \boldsymbol{\Omega}_i)
 \end{eqnarray*}
 </div>
 </div>
@@ -14515,12 +14515,6 @@ The above expressions for $\text{D}_{\text{vech} \mathbf{L}} \ell_i$ are equival
 &amp;&amp; + (\mathbf{I}_q \otimes \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{r}_i \mathbf{r}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i)] \mathbf{D}_q \\
 \rightarrow \mathbb{E}[- \frac{\partial^2}{\partial (\text{vech} \mathbf{L})^T \partial \text{vech} \mathbf{L}} \ell_i] &amp;=&amp; \mathbf{D}_q^T [\mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \mathbf{L} \otimes \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i + (\mathbf{L}^T \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \otimes \mathbf{Z}_i^T \boldsymbol{\Omega}_i^{-1} \mathbf{Z}_i \mathbf{L}) \mathbf{K}_{qq}] \mathbf{D}_q 
 \end{eqnarray*}
-</div>
-</div>
-<div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
-</div><div class="jp-RenderedHTMLCommon jp-RenderedMarkdown jp-MarkdownOutput " data-mime-type="text/markdown">
-<p>As shown above, the cross terms in the expected information matrix are zero.</p>
-
 </div>
 </div>
 <div class="jp-Cell-inputWrapper"><div class="jp-InputPrompt jp-InputArea-prompt">
