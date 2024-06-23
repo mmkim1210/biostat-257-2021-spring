@@ -5,7 +5,9 @@ using BenchmarkTools, CSV, DataFrames, Distributions, PrettyTables
 using Ipopt, NLopt, MathOptInterface, MixedModels
 
 export LmmObs,
-    logl!
+    LmmModel,
+    logl!,
+    init_ls!
 
 const MOI = MathOptInterface
 
@@ -67,6 +69,59 @@ function LmmObs(
         LM⁻¹LᵗZᵗZ, ZᵗZLM⁻¹LᵗZᵗr, Zᵗr, ZᵗΩ⁻¹r)
 end
 
+struct LmmModel{T <: AbstractFloat} <: MOI.AbstractNLPEvaluator
+    # data
+    data :: Vector{LmmObs{T}}
+    # parameters
+    β    :: Vector{T}
+    L    :: Matrix{T}
+    σ²   :: Vector{T}    
+    # arrays for holding gradient
+    ∇β   :: Vector{T}
+    ∇σ²  :: Vector{T}
+    ∇L   :: Matrix{T}
+    # TODO: add whatever intermediate arrays you may want to pre-allocate
+    xty  :: Vector{T}
+    ztr2 :: Vector{T}
+    xtx  :: Matrix{T}
+    ztz2 :: Matrix{T}
+    storage_pp  :: Matrix{T}
+    storage_qq2 :: Matrix{T}
+    ztr         :: Vector{T}
+    storage_qq  :: Matrix{T}
+end
+
+"""
+    LmmModel(data::Vector{LmmObs})
+
+Create an LMM model that contains data and parameters.
+"""
+function LmmModel(obsvec::Vector{LmmObs{T}}) where T <: AbstractFloat
+    # dims
+    p    = size(obsvec[1].X, 2)
+    q    = size(obsvec[1].Z, 2)
+    # parameters
+    β    = Vector{T}(undef, p)
+    L    = Matrix{T}(undef, q, q)
+    σ²   = Vector{T}(undef, 1)    
+    # gradients
+    ∇β   = similar(β)    
+    ∇σ²  = similar(σ²)
+    ∇L   = similar(L)
+    # working arrays
+    xty  = Vector{T}(undef, p)
+    ztr2 = Vector{T}(undef, abs2(q))
+    xtx  = Matrix{T}(undef, p, p)
+    ztz2 = Matrix{T}(undef, abs2(q), abs2(q))
+    storage_pp = Matrix{T}(undef, p, p)
+    storage_qq2 = Matrix{T}(undef, abs2(q), abs2(q))
+    ztr         = Vector{T}(undef, q)
+    storage_qq  = Matrix{T}(undef, q, q)
+    LmmModel(obsvec, β, L, σ², ∇β, ∇σ², ∇L, xty, ztr2, xtx, ztz2,
+        storage_pp, storage_qq2, ztr, storage_qq)
+end
+
 include("logl.jl")
+include("init.jl")
 
 end

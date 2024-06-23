@@ -73,3 +73,33 @@ function logl!(
     end
     logl
 end
+
+"""
+    logl!(m::LmmModel, needgrad = false)
+
+Evaluate the log-likelihood of an LMM model at parameter values `m.β`, `m.L`, 
+and `m.σ²`. If `needgrad == true`, then `m.∇β`, `m.∇L`, and `m.σ²` are filled 
+with the corresponding gradient.
+"""
+function logl!(m::LmmModel{T}, needgrad::Bool = false) where T <: AbstractFloat
+    logl = zero(T)
+    if needgrad
+        fill!(m.∇β , 0)
+        fill!(m.∇L , 0)
+        fill!(m.∇σ², 0)        
+    end
+    @inbounds for i in 1:length(m.data)
+        obs = m.data[i]
+        logl += logl!(obs, m.β, m.L, m.σ²[1], needgrad)
+        if needgrad
+            BLAS.axpy!(T(1), obs.∇β, m.∇β)
+            BLAS.axpy!(T(1), obs.∇L, m.∇L)
+            m.∇σ²[1] += obs.∇σ²[1]
+        end
+    end
+    # obtain gradient wrt L: m.∇L = m.∇L * L
+    if needgrad
+        BLAS.trmm!('R', 'L', 'N', 'N', T(1), m.L, m.∇L)
+    end
+    logl
+end

@@ -9,3 +9,4 @@ papers/*
 julia/*
 videos/*
 **/Manifest.toml
+**/lmm_data.csv
