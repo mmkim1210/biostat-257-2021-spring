@@ -8,3 +8,4 @@ hw4/lmm_data.csv
 papers/*
 julia/*
 videos/*
+**/Manifest.toml
