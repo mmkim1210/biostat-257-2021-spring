@@ -1,13 +1,13 @@
 module LMM
 
-using LinearAlgebra, DelimitedFiles, Random
-using BenchmarkTools, CSV, DataFrames, Distributions, PrettyTables
-using Ipopt, NLopt, MathOptInterface, MixedModels
+using LinearAlgebra, Ipopt, NLopt, MathOptInterface
 
 export LmmObs,
     LmmModel,
     logl!,
-    init_ls!
+    init_ls!,
+    fit!,
+    ◺
 
 const MOI = MathOptInterface
 
@@ -16,10 +16,15 @@ struct LmmObs{T <: AbstractFloat}
     y          :: Vector{T}
     X          :: Matrix{T}
     Z          :: Matrix{T}
-    # arrays for holding gradient
+    # arrays for gradient
     ∇β         :: Vector{T}
     ∇σ²        :: Vector{T}
-    ∇L         :: Matrix{T}    
+    ∇L         :: Matrix{T}
+    # arrays for Hessian
+    Hββ        :: Matrix{T}
+    HLL        :: Matrix{T}
+    Hσ²L       :: Matrix{T}
+    Hσ²σ²      :: Vector{T}
     # working arrays
     yty        :: T
     xty        :: Vector{T}
@@ -49,7 +54,11 @@ function LmmObs(
     n, p, q       = size(X, 1), size(X, 2), size(Z, 2)    
     ∇β            = Vector{T}(undef, p)
     ∇σ²           = Vector{T}(undef, 1)
-    ∇L            = Matrix{T}(undef, q, q)    
+    ∇L            = Matrix{T}(undef, q, q)  
+    Hββ           = Matrix{T}(undef, p, p)  
+    HLL           = Matrix{T}(undef, ◺(q), ◺(q))
+    Hσ²L          = Vector{T}(undef, q, q)
+    Hσ²σ²         = Vector{T}(undef, 1)
     yty           = abs2(norm(y))
     xty           = transpose(X) * y
     zty           = transpose(Z) * y    
@@ -63,7 +72,7 @@ function LmmObs(
     ZᵗZLM⁻¹LᵗZᵗr  = Vector{T}(undef, q)
     Zᵗr           = Vector{T}(undef, q)
     ZᵗΩ⁻¹r        = Vector{T}(undef, q)
-    LmmObs(y, X, Z, ∇β, ∇σ², ∇L, 
+    LmmObs(y, X, Z, ∇β, ∇σ², ∇L, Hββ, HLL, Hσ²L, Hσ²σ²,
         yty, xty, zty, storage_p, storage_q, 
         xtx, ztx, ztz, storage_qq,
         LM⁻¹LᵗZᵗZ, ZᵗZLM⁻¹LᵗZᵗr, Zᵗr, ZᵗΩ⁻¹r)
@@ -75,12 +84,17 @@ struct LmmModel{T <: AbstractFloat} <: MOI.AbstractNLPEvaluator
     # parameters
     β    :: Vector{T}
     L    :: Matrix{T}
-    σ²   :: Vector{T}    
-    # arrays for holding gradient
+    σ²   :: Vector{T}
+    # arrays for gradient
     ∇β   :: Vector{T}
     ∇σ²  :: Vector{T}
     ∇L   :: Matrix{T}
-    # TODO: add whatever intermediate arrays you may want to pre-allocate
+    # arrays for Hessian
+    Hββ        :: Matrix{T}
+    HLL        :: Matrix{T}
+    Hσ²L       :: Matrix{T}
+    Hσ²σ²      :: Vector{T}
+    # working arrays
     xty  :: Vector{T}
     ztr2 :: Vector{T}
     xtx  :: Matrix{T}
@@ -108,7 +122,12 @@ function LmmModel(obsvec::Vector{LmmObs{T}}) where T <: AbstractFloat
     ∇β   = similar(β)    
     ∇σ²  = similar(σ²)
     ∇L   = similar(L)
-    # working arrays
+    # Hessians
+    Hββ           = Matrix{T}(undef, p, p)  
+    HLL           = Matrix{T}(undef, ◺(q), ◺(q))
+    Hσ²L          = Vector{T}(undef, q, q)
+    Hσ²σ²         = Vector{T}(undef, 1)
+    # working arrays for initialization
     xty  = Vector{T}(undef, p)
     ztr2 = Vector{T}(undef, abs2(q))
     xtx  = Matrix{T}(undef, p, p)
@@ -117,11 +136,13 @@ function LmmModel(obsvec::Vector{LmmObs{T}}) where T <: AbstractFloat
     storage_qq2 = Matrix{T}(undef, abs2(q), abs2(q))
     ztr         = Vector{T}(undef, q)
     storage_qq  = Matrix{T}(undef, q, q)
-    LmmModel(obsvec, β, L, σ², ∇β, ∇σ², ∇L, xty, ztr2, xtx, ztz2,
+    LmmModel(obsvec, β, L, σ², ∇β, ∇σ², ∇L, Hββ, HLL, Hσ²L, Hσ²σ²,
+        xty, ztr2, xtx, ztz2,
         storage_pp, storage_qq2, ztr, storage_qq)
 end
 
 include("logl.jl")
 include("init.jl")
+include("nlp.jl")
 
 end

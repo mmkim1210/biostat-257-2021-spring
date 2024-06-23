@@ -1,29 +1,33 @@
 """
-    logl!(obs::LmmObs, β, L, σ², needgrad = false)
+    logl!(obs::LmmObs, β, L, σ², needgrad = true, needhess = false)
 
 Evaluate the log-likelihood of a single LMM datum at parameter values `β`, `L`, 
 and `σ²`. If `needgrad == true`, then `obs.∇β`, `obs.∇L`, and `obs.σ²` are filled 
-with the corresponding gradient.
+with the corresponding gradient. If `needhess == true`, then `obs.Hββ`, `obs.HLL`,
+`obs.Hσ²L`, and `obs.Hσ²σ²` are filled with the corresponding Hessian.
 """
 function logl!(
         obs      :: LmmObs{T}, 
         β        :: Vector{T}, 
         L        :: Matrix{T}, 
         σ²       :: T,
-        needgrad :: Bool = true
+        needgrad :: Bool = true,
+        needhess :: Bool = false
     ) where T <: AbstractFloat
     n, p, q = size(obs.X, 1), size(obs.X, 2), size(obs.Z, 2)
     ####################
     # Evaluate objective
     ####################    
-    # form the q-by-q matrix: M = σ² * I + Lᵗ Zᵗ Z L
+    # Ω = σ²In + ZLLᵗZᵗ, Ω⁻¹ = σ⁻²In - σ⁻²ZL(σ²Iq + LᵗZᵗZL)⁻¹LᵗZᵗ
+    # form the q-by-q matrix: M = σ²Iq + LᵗZᵗZL
+    # det(Ω) = det(σ⁻²M)det(Iq)det(σ²In)
     copy!(obs.storage_qq, obs.ztz)
     BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qq) # O(q^3)
     BLAS.trmm!('R', 'L', 'N', 'N', T(1), L, obs.storage_qq) # O(q^3)
     @inbounds for j in 1:q
         obs.storage_qq[j, j] += σ²
     end
-    # cholesky on M = σ² * I + Lᵗ Zᵗ Z L
+    # cholesky on M = σ²Iq + LᵗZᵗZL
     LAPACK.potrf!('U', obs.storage_qq) # O(q^3)
     # storage_q = (Mchol.U') \ (Lt * (Zt * res))
     BLAS.gemv!('N', T(-1), obs.ztx, β, T(1), copy!(obs.Zᵗr, obs.zty)) # O(pq)
@@ -71,17 +75,27 @@ function logl!(
         BLAS.ger!(T(1), obs.ZᵗΩ⁻¹r, obs.ZᵗΩ⁻¹r, obs.∇L)
         # L is multiplied later to reduce flops
     end
+    ###################
+    # Evaluate Hessian
+    ###################    
+    if needhess
+    end
     logl
 end
 
 """
-    logl!(m::LmmModel, needgrad = false)
+    logl!(m::LmmModel, needgrad = true, needhess = false)
 
 Evaluate the log-likelihood of an LMM model at parameter values `m.β`, `m.L`, 
 and `m.σ²`. If `needgrad == true`, then `m.∇β`, `m.∇L`, and `m.σ²` are filled 
-with the corresponding gradient.
+with the corresponding gradient. If `needhess == true`, then `obs.Hββ`, `obs.HLL`,
+`obs.Hσ²L`, and `obs.Hσ²σ²` are filled with the corresponding Hessian.
 """
-function logl!(m::LmmModel{T}, needgrad::Bool = false) where T <: AbstractFloat
+function logl!(
+    m        :: LmmModel{T},
+    needgrad :: Bool = true,
+    needhess :: Bool = false
+    ) where T <: AbstractFloat
     logl = zero(T)
     if needgrad
         fill!(m.∇β , 0)

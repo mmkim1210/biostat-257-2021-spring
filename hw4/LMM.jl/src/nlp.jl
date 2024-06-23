@@ -6,7 +6,7 @@ should be provided in `m.β`, `m.σ²`, `m.L`.
 """
 function fit!(
         m :: LmmModel{T},
-        solver = Ipopt.Optimizer()
+        solver :: MOI.AbstractOptimizer = Ipopt.Optimizer()
     ) where T <: AbstractFloat
     p    = size(m.data[1].X, 2)
     q    = size(m.data[1].Z, 2)
