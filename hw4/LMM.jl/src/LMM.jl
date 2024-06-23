@@ -57,7 +57,7 @@ function LmmObs(
     ∇L            = Matrix{T}(undef, q, q)  
     Hββ           = Matrix{T}(undef, p, p)  
     HLL           = Matrix{T}(undef, ◺(q), ◺(q))
-    Hσ²L          = Vector{T}(undef, q, q)
+    Hσ²L          = Matrix{T}(undef, q, q)
     Hσ²σ²         = Vector{T}(undef, 1)
     yty           = abs2(norm(y))
     xty           = transpose(X) * y
@@ -125,7 +125,7 @@ function LmmModel(obsvec::Vector{LmmObs{T}}) where T <: AbstractFloat
     # Hessians
     Hββ           = Matrix{T}(undef, p, p)  
     HLL           = Matrix{T}(undef, ◺(q), ◺(q))
-    Hσ²L          = Vector{T}(undef, q, q)
+    Hσ²L          = Matrix{T}(undef, q, q)
     Hσ²σ²         = Vector{T}(undef, 1)
     # working arrays for initialization
     xty  = Vector{T}(undef, p)
