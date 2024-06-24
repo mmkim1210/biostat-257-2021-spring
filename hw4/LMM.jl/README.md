@@ -1,1 +1,3 @@
 # LMM
+
+Maximum likelihood estimation for linear mixed models (LMM) using [nonlinear programming (NLP)](https://github.com/mmkim1210/biostat-257-2021-spring/blob/main/hw4/hw04.ipynb), [expectation-maximization (EM)](https://github.com/mmkim1210/biostat-257-2021-spring/blob/main/hw5/hw05.ipynb), and [minorization-maximization (MM)](https://github.com/mmkim1210/biostat-257-2021-spring/blob/main/hw6/hw06.ipynb) algorithms.
