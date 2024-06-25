@@ -71,13 +71,21 @@ function logl!(
         BLAS.gemm!('N', 'N', T(1), obs.ztz, obs.LM⁻¹LᵗZᵗZ, T(-1), obs.∇L) # ZᵗΩ⁻¹Z
         obs.∇L ./= σ²
         obs.ZᵗΩ⁻¹r .= (obs.Zᵗr .- obs.ZᵗZLM⁻¹LᵗZᵗr) ./ σ²
-        BLAS.ger!(T(1), obs.ZᵗΩ⁻¹r, obs.ZᵗΩ⁻¹r, obs.∇L)
+        BLAS.ger!(T(1), obs.ZᵗΩ⁻¹r, obs.ZᵗΩ⁻¹r, obs.∇L) # ZᵗΩ⁻¹rrᵗΩ⁻¹Z
         # L is multiplied later to reduce flops
     end
     ###################
     # Evaluate Hessian
     ###################    
     if needhess
+        # compute Hββ
+        obs.Hββ ./= σ²
+        # compute HLL
+        obs.HLL ./= σ²
+        # compute Hσ²L
+        obs.Hσ²L ./= σ²
+        # compute Hσ²σ²
+        obs.Hσ²σ² ./= σ²
     end
     logl
 end
@@ -113,6 +121,9 @@ function logl!(
     # obtain gradient wrt L: m.∇L = m.∇L * L
     if needgrad
         BLAS.trmm!('R', 'L', 'N', 'N', T(1), m.L, m.∇L)
+    end
+    if needhess
+
     end
     logl
 end
