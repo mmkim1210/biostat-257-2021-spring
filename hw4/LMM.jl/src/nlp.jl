@@ -1,11 +1,11 @@
 """
-    fit!(m::LmmModel, solver=Ipopt.Optimizer())
+    fit!(m::LmmModel, solver::MOI.AbstractOptimizer = Ipopt.Optimizer())
 
 Fit an `LmmModel` object by MLE using a nonlinear programming solver. Start point 
 should be provided in `m.β`, `m.σ²`, `m.L`.
 """
 function fit!(
-        m :: LmmModel{T},
+        m      :: LmmModel{T},
         solver :: MOI.AbstractOptimizer = Ipopt.Optimizer()
     ) where T <: AbstractFloat
     p    = size(m.data[1].X, 2)

@@ -1,4 +1,7 @@
 using LMM, Random, Test, LinearAlgebra, Distributions, BenchmarkTools
+using Ipopt, NLopt, MathOptInterface
+
+const MOI = MathOptInterface
 
 @testset "LmmObs" begin
     Random.seed!(257)
@@ -126,3 +129,78 @@ end
     bm_init = @benchmark init_ls!($lmm)
     clamp(1 / (median(bm_init).time / 1e6) * 10, 0, 10)
 end
+
+@testset "fit!" begin
+    # initialize from least squares
+    init_ls!(lmm)
+    println("objective value at starting point: ", logl!(lmm)); println()
+    # NLopt (LD_MMA) obj. val = -2.8400587866501966e6
+    NLopt_solver = NLopt.Optimizer()
+    MOI.set(NLopt_solver, MOI.RawOptimizerAttribute("algorithm"), :LD_MMA)
+    @time fit!(lmm, NLopt_solver)
+
+    println("objective value at solution: $(logl!(lmm)))")
+    println("solution values:")
+    @show lmm.β
+    @show lmm.σ²
+    @show lmm.L * transpose(lmm.L)
+    println("gradient @ solution:")
+    @show lmm.∇β
+    @show lmm.∇σ²
+    @show lmm.∇L
+    @show norm([lmm.∇β; vec(LowerTriangular(lmm.∇L)); lmm.∇σ²])
+    # objective at solution should be close enough to the optimal
+    @assert logl!(lmm) > -2.840059e6
+    # gradient at solution should be small enough
+    @assert norm([lmm.∇β; vec(LowerTriangular(lmm.∇L)); lmm.∇σ²]) < 0.1
+    NLopt_solver = NLopt.Optimizer()
+    MOI.set(NLopt_solver, MOI.RawOptimizerAttribute("algorithm"), :LD_MMA)
+    bm_mma = @benchmark fit!($lmm, $(NLopt_solver)) setup=(init_ls!(lmm))
+    clamp(1 / (median(bm_mma).time / 1e9) * 10, 0, 10)
+end
+
+# # vector of solvers to compare
+# solvers = ["NLopt (LN_COBYLA, gradient free)", "NLopt (LD_MMA, gradient-based)", 
+#     "Ipopt (L-BFGS)"]
+
+# function setup_solver(s::String)
+#     if s == "NLopt (LN_COBYLA, gradient free)"
+#         solver = NLopt.Optimizer()
+#         MOI.set(solver, MOI.RawOptimizerAttribute("algorithm"), :LN_COBYLA)
+#     elseif s == "NLopt (LD_MMA, gradient-based)"
+#         solver = NLopt.Optimizer()
+#         MOI.set(solver, MOI.RawOptimizerAttribute("algorithm"), :LD_MMA)
+#     elseif s == "Ipopt (L-BFGS)"
+#         solver = Ipopt.Optimizer()
+#         MOI.set(solver, MOI.RawOptimizerAttribute("print_level"), 0)
+#         MOI.set(solver, MOI.RawOptimizerAttribute("hessian_approximation"), "limited-memory")
+#         MOI.set(solver, MOI.RawOptimizerAttribute("tol"), 1e-6)
+#     elseif s == "Ipopt (use FIM)"
+#         # Ipopt (use Hessian) obj val = -2.8400587866468e6
+#         solver = Ipopt.Optimizer()
+#         MOI.set(solver, MOI.RawOptimizerAttribute("print_level"), 0)        
+#     else
+#         error("unrecognized solver $s")
+#     end
+#     solver
+# end
+
+# # containers for results
+# runtime = zeros(length(solvers))
+# objvals = zeros(length(solvers))
+# gradnrm = zeros(length(solvers))
+
+# for i in 1:length(solvers)
+#     solver = setup_solver(solvers[i])
+#     bm = @benchmark fit!($lmm, $solver) setup = (init_ls!(lmm))
+#     runtime[i] = median(bm).time / 1e9
+#     objvals[i] = logl!(lmm, true)
+#     gradnrm[i] = norm([lmm.∇β; vec(LowerTriangular(lmm.∇L)); lmm.∇σ²])
+# end
+
+# # display results
+# pretty_table(
+#     hcat(solvers, runtime, objvals, gradnrm),
+#     header = ["Solver", "Runtime", "Log-Like", "Gradiant Norm"],
+#     formatters = (ft_printf("%5.2f", 2), ft_printf("%8.8f", 3:4))
+#     )

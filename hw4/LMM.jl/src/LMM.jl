@@ -144,5 +144,6 @@ end
 include("logl.jl")
 include("init.jl")
 include("nlp.jl")
+include("multivariate_calculus.jl")
 
 end

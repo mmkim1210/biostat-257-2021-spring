@@ -36,20 +36,19 @@ function logl!(
     # l2 norm of residual vector
     copy!(obs.storage_p, obs.xty)
     rtr  = obs.yty +
-    dot(β, BLAS.gemv!('N', T(1), obs.xtx, β, T(-2), obs.storage_p))
+        dot(β, BLAS.gemv!('N', T(1), obs.xtx, β, T(-2), obs.storage_p))
     # assemble pieces
     logl::T = n * log(2π) + (n - q) * log(σ²) # constant term
     @inbounds for j in 1:q
         logl += 2log(obs.storage_qq[j, j])
     end
-    qf    = abs2(norm(obs.storage_q)) # quadratic form term
+    qf    = abs2(norm(obs.storage_q)) # quadratic form term, rᵗZLM⁻¹LᵗZᵗr
     logl += (rtr - qf) / σ² 
     logl /= -2
     ###################
     # Evaluate gradient
     ###################    
     if needgrad
-        # TODO: fill ∇β, ∇σ², ∇L by gradients
         # compute ∇β
         copy!(obs.∇β, obs.xty) 
         BLAS.gemv!('N', T(-1), obs.xtx, β, T(1), obs.∇β)
@@ -63,13 +62,13 @@ function logl!(
         BLAS.trsm!('L', 'U', 'T', 'N', T(1), obs.storage_qq, obs.LM⁻¹LᵗZᵗZ)
         BLAS.trsm!('L', 'U', 'N', 'N', T(1), obs.storage_qq, obs.LM⁻¹LᵗZᵗZ)
         BLAS.trmm!('L', 'L', 'N', 'N', T(1), L, obs.LM⁻¹LᵗZᵗZ)
-        obs.∇σ²[1] += tr(obs.LM⁻¹LᵗZᵗZ)
+        obs.∇σ²[1] += tr(obs.LM⁻¹LᵗZᵗZ) # tr(Ω⁻¹)
         BLAS.gemv!('N', T(1), obs.ztz, obs.storage_q, T(0), obs.ZᵗZLM⁻¹LᵗZᵗr)
-        obs.∇σ²[1] += (rtr - 2 * qf + dot(obs.storage_q, obs.ZᵗZLM⁻¹LᵗZᵗr)) / σ²
+        obs.∇σ²[1] += (rtr - 2 * qf + dot(obs.storage_q, obs.ZᵗZLM⁻¹LᵗZᵗr)) / σ² # dot(rᵗZLM⁻¹Lᵗ, ZᵗZLM⁻¹LᵗZᵗr)
         obs.∇σ²[1] /= (2 * σ²)
         # compute ∇L
         copy!(obs.∇L, obs.ztz)
-        BLAS.gemm!('N', 'N', T(1), obs.ztz, obs.LM⁻¹LᵗZᵗZ, T(-1), obs.∇L)
+        BLAS.gemm!('N', 'N', T(1), obs.ztz, obs.LM⁻¹LᵗZᵗZ, T(-1), obs.∇L) # ZᵗΩ⁻¹Z
         obs.∇L ./= σ²
         obs.ZᵗΩ⁻¹r .= (obs.Zᵗr .- obs.ZᵗZLM⁻¹LᵗZᵗr) ./ σ²
         BLAS.ger!(T(1), obs.ZᵗΩ⁻¹r, obs.ZᵗΩ⁻¹r, obs.∇L)
