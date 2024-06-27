@@ -34,7 +34,7 @@ struct LmmObs{T <: AbstractFloat}
     xtx           :: Matrix{T}
     ztx           :: Matrix{T}
     ztz           :: Matrix{T}
-    storage_qq    :: Matrix{T}
+    storage_qq_1  :: Matrix{T}
     LM⁻¹LᵗZᵗZ     :: Matrix{T}
     ZᵗZLM⁻¹LᵗZᵗr  :: Vector{T}
     Zᵗr           :: Vector{T}
@@ -76,13 +76,13 @@ function LmmObs(
     xtx           = transpose(X) * X
     ztx           = transpose(Z) * X
     ztz           = transpose(Z) * Z
-    storage_qq    = similar(ztz)
+    storage_qq_1  = similar(ztz)
     LM⁻¹LᵗZᵗZ     = Matrix{T}(undef, q, q)
     ZᵗZLM⁻¹LᵗZᵗr  = Vector{T}(undef, q)
     Zᵗr           = Vector{T}(undef, q)
     ZᵗΩ⁻¹r        = Vector{T}(undef, q)
     storage_qp    = Matrix{T}(undef, q, p)
-    storage_pp    = Matrix{T}(undef, p, q)
+    storage_pp    = Matrix{T}(undef, p, p)
     storage_qq_2  = Matrix{T}(undef, q, q)
     storage_qq_3  = Matrix{T}(undef, q, q)
     storage_qq_4  = Matrix{T}(undef, q, q)
@@ -92,7 +92,7 @@ function LmmObs(
     storage_qq2_2 = Matrix{T}(undef, abs2(q), abs2(q))
     LmmObs(y, X, Z, ∇β, ∇σ², ∇L, Hββ, HLL, Hσ²L, Hσ²σ²,
         yty, xty, zty, storage_p, storage_q, 
-        xtx, ztx, ztz, storage_qq,
+        xtx, ztx, ztz, storage_qq_1,
         LM⁻¹LᵗZᵗZ, ZᵗZLM⁻¹LᵗZᵗr, Zᵗr, ZᵗΩ⁻¹r,
         storage_qp, storage_pp, storage_qq_2, storage_qq_3,
         storage_qq_4, storage_qq_5, storage_qq_6,

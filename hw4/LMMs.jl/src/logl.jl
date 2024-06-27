@@ -21,18 +21,18 @@ function logl!(
     # Ω = σ²In + ZLLᵗZᵗ, Ω⁻¹ = σ⁻²In - σ⁻²ZL(σ²Iq + LᵗZᵗZL)⁻¹LᵗZᵗ
     # form the q-by-q matrix: M = σ²Iq + LᵗZᵗZL
     # det(Ω) = det(σ⁻²M)det(Iq)det(σ²In)
-    copy!(obs.storage_qq, obs.ztz)
-    BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qq) # O(q^3)
-    BLAS.trmm!('R', 'L', 'N', 'N', T(1), L, obs.storage_qq) # O(q^3)
+    copy!(obs.storage_qq_1, obs.ztz)
+    BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qq_1) # O(q^3)
+    BLAS.trmm!('R', 'L', 'N', 'N', T(1), L, obs.storage_qq_1) # O(q^3)
     @inbounds for j in 1:q
-        obs.storage_qq[j, j] += σ²
+        obs.storage_qq_1[j, j] += σ²
     end
-    # cholesky on M = σ²Iq + LᵗZᵗZL
-    LAPACK.potrf!('U', obs.storage_qq) # O(q^3)
+    # cholesky on M
+    LAPACK.potrf!('U', obs.storage_qq_1) # O(q^3)
     # storage_q = (Mchol.U') \ (Lt * (Zt * res))
     BLAS.gemv!('N', T(-1), obs.ztx, β, T(1), copy!(obs.Zᵗr, obs.zty)) # O(pq)
     BLAS.trmv!('L', 'T', 'N', L, copy!(obs.storage_q, obs.Zᵗr)) # O(q^2)
-    BLAS.trsv!('U', 'T', 'N', obs.storage_qq, obs.storage_q) # O(q^3)
+    BLAS.trsv!('U', 'T', 'N', obs.storage_qq_1, obs.storage_q) # O(q^3)
     # l2 norm of residual vector
     copy!(obs.storage_p, obs.xty)
     rtr  = obs.yty +
@@ -40,7 +40,7 @@ function logl!(
     # assemble pieces
     logl::T = n * log(2π) + (n - q) * log(σ²) # constant term
     @inbounds for j in 1:q
-        logl += 2log(obs.storage_qq[j, j])
+        logl += 2log(obs.storage_qq_1[j, j])
     end
     qf    = abs2(norm(obs.storage_q)) # quadratic form term, rᵗZLM⁻¹LᵗZᵗr
     logl += (rtr - qf) / σ² 
@@ -52,15 +52,16 @@ function logl!(
         # compute ∇β
         copy!(obs.∇β, obs.xty) 
         BLAS.gemv!('N', T(-1), obs.xtx, β, T(1), obs.∇β)
-        BLAS.trsv!('U', 'N', 'N', obs.storage_qq, obs.storage_q)
+        BLAS.trsv!('U', 'N', 'N', obs.storage_qq_1, obs.storage_q)
         BLAS.trmv!('L', 'N', 'N', L, obs.storage_q) # LM⁻¹LᵗZᵗr
         BLAS.gemv!('T', T(-1), obs.ztx, obs.storage_q, T(1), obs.∇β)
         obs.∇β ./= σ²
         # compute ∇σ² 
-        obs.∇σ²[1] = - n 
-        BLAS.gemm!('T', 'N', T(1), L, obs.ztz, T(0), obs.LM⁻¹LᵗZᵗZ)
-        BLAS.trsm!('L', 'U', 'T', 'N', T(1), obs.storage_qq, obs.LM⁻¹LᵗZᵗZ)
-        BLAS.trsm!('L', 'U', 'N', 'N', T(1), obs.storage_qq, obs.LM⁻¹LᵗZᵗZ)
+        obs.∇σ²[1] = - n
+        copy!(obs.LM⁻¹LᵗZᵗZ, obs.ztz)
+        BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.LM⁻¹LᵗZᵗZ)
+        BLAS.trsm!('L', 'U', 'T', 'N', T(1), obs.storage_qq_1, obs.LM⁻¹LᵗZᵗZ)
+        BLAS.trsm!('L', 'U', 'N', 'N', T(1), obs.storage_qq_1, obs.LM⁻¹LᵗZᵗZ)
         BLAS.trmm!('L', 'L', 'N', 'N', T(1), L, obs.LM⁻¹LᵗZᵗZ)
         obs.∇σ²[1] += tr(obs.LM⁻¹LᵗZᵗZ) # tr(Ω⁻¹)
         BLAS.gemv!('N', T(1), obs.ztz, obs.storage_q, T(0), obs.ZᵗZLM⁻¹LᵗZᵗr)
@@ -82,15 +83,18 @@ function logl!(
         copy!(obs.Hββ, obs.xtx)
         copy!(obs.storage_qp, obs.ztx)
         BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qp)
-        BLAS.trsm!('L', 'U', 'T', 'N', T(1), obs.storage_qq, obs.storage_qp)
+        BLAS.trsm!('L', 'U', 'T', 'N', T(1), obs.storage_qq_1, obs.storage_qp)
         BLAS.gemm!('T', 'N', T(1), obs.storage_qp, obs.storage_qp, T(0), obs.storage_pp) # XᵗZLM⁻¹LᵗZᵗX
         obs.Hββ .= (obs.Hββ .- obs.storage_pp) ./ (T(-1) * σ²)
         # compute Hσ²L
-        mul!(obs.storage_qq_2, obs.ztz, L) # ZᵗZL
+        copy!(obs.storage_qq_2, obs.ztz)
+        BLAS.trmm!('R', 'L', 'N', 'N', T(1), L, obs.storage_qq_2) # ZᵗZL
         mul!(obs.storage_qq_3, obs.ztz, obs.LM⁻¹LᵗZᵗZ) # ZᵗZLM⁻¹LᵗZᵗZ
-        mul!(obs.storage_qq_4, obs.storage_qq_3, L) # ZᵗZLM⁻¹LᵗZᵗZL
+        copy!(obs.storage_qq_4, obs.storage_qq_3)
+        BLAS.trmm!('R', 'L', 'N', 'N', T(1), L, obs.storage_qq_4) # ZᵗZLM⁻¹LᵗZᵗZL
         mul!(obs.storage_qq_5, obs.storage_qq_3, obs.LM⁻¹LᵗZᵗZ) # ZᵗZLM⁻¹LᵗZᵗZLM⁻¹LᵗZᵗZ
-        mul!(obs.storage_qq_6, obs.storage_qq_5, L) # ZᵗZLM⁻¹LᵗZᵗZLM⁻¹LᵗZᵗZL
+        copy!(obs.storage_qq_6, obs.storage_qq_5)
+        BLAS.trmm!('R', 'L', 'N', 'N', T(1), L, obs.storage_qq_6) # ZᵗZLM⁻¹LᵗZᵗZLM⁻¹LᵗZᵗZL
         obs.Hσ²L .= obs.storage_qq_2 .- 2 .* obs.storage_qq_4 .+ obs.storage_qq_6
         @inbounds for j in 1:(q - 1), i in (j + 1):q
             obs.Hσ²L[i, j] += obs.Hσ²L[j, i]
@@ -100,17 +104,17 @@ function logl!(
         obs.storage_qq_5 .= obs.storage_qq_2 .- obs.storage_qq_4
         kron!(obs.storage_qq2_1, transpose(obs.storage_qq_5), obs.storage_qq_5)
         obs.storage_qq_5 .= obs.ztz .- obs.storage_qq_3
-        mul!(obs.storage_qq_3, transpose(L), obs.storage_qq_2) # LᵗZᵗZL
-        mul!(obs.storage_qq_6, transpose(L), obs.storage_qq_4) # LᵗZᵗZLM⁻¹LᵗZᵗZL
-        obs.storage_qq_4 .= obs.storage_qq_3 .- obs.storage_qq_6
-        kron!(obs.storage_qq2_2, obs.storage_qq_4, obs.storage_qq_5)
+        BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qq_2) # LᵗZᵗZL
+        BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qq_4) # LᵗZᵗZLM⁻¹LᵗZᵗZL
+        obs.storage_qq_3 .= obs.storage_qq_2 .- obs.storage_qq_4
+        kron!(obs.storage_qq2_2, obs.storage_qq_3, obs.storage_qq_5)
         obs.storage_qq2_1 .+= obs.storage_qq2_2
         D = duplication(q)
         copy!(obs.HLL, transpose(D) * obs.storage_qq2_1 * D)
         obs.HLL ./= (T(-1) * abs2(σ²))
         # compute Hσ²σ²
         obs.Hσ²σ²[1] = n - 2 * tr(obs.LM⁻¹LᵗZᵗZ) + dot(transpose(obs.LM⁻¹LᵗZᵗZ), obs.LM⁻¹LᵗZᵗZ)
-        obs.Hσ²σ²[1] ./= (-2 * abs2(σ²))
+        obs.Hσ²σ²[1] /= (-2 * abs2(σ²))
     end
     logl
 end
