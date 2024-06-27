@@ -78,11 +78,16 @@ function logl!(
     # Evaluate Hessian
     ###################    
     if needhess
+        #Ω⁻¹ = σ⁻²In - σ⁻²ZLM⁻¹LᵗZᵗ
         # compute Hββ
+        copy!(obs.Hββ, obs.xtx) 
+        BLAS.gemv!('N', T(-1), obs.xtx, β, T(1), obs.Hββ)
+
         obs.Hββ ./= σ²
         # compute HLL
         obs.HLL ./= σ²
         # compute Hσ²L
+        # LMM.vech(A + transpose(A) - Diagonal(diag(A)))
         obs.Hσ²L ./= σ²
         # compute Hσ²σ²
         obs.Hσ²σ² ./= σ²

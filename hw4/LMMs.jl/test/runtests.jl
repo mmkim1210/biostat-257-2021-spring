@@ -1,4 +1,4 @@
-using LMM, Random, Test, LinearAlgebra, Distributions, BenchmarkTools
+using LMMs, Random, Test, LinearAlgebra, Distributions, BenchmarkTools
 using Ipopt, NLopt, MathOptInterface
 
 const MOI = MathOptInterface
