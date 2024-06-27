@@ -78,19 +78,39 @@ function logl!(
     # Evaluate Hessian
     ###################    
     if needhess
-        #Ω⁻¹ = σ⁻²In - σ⁻²ZLM⁻¹LᵗZᵗ
         # compute Hββ
-        copy!(obs.Hββ, obs.xtx) 
-        BLAS.gemv!('N', T(-1), obs.xtx, β, T(1), obs.Hββ)
-
-        obs.Hββ ./= σ²
-        # compute HLL
-        obs.HLL ./= σ²
+        copy!(obs.Hββ, obs.xtx)
+        copy!(obs.storage_qp, obs.ztx)
+        BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qp)
+        BLAS.trsm!('L', 'U', 'T', 'N', T(1), obs.storage_qq, obs.storage_qp)
+        BLAS.gemm!('T', 'N', T(1), obs.storage_qp, obs.storage_qp, T(0), obs.storage_pp) # XᵗZLM⁻¹LᵗZᵗX
+        obs.Hββ .= (obs.Hββ .- obs.storage_pp) ./ (T(-1) * σ²)
         # compute Hσ²L
-        # LMM.vech(A + transpose(A) - Diagonal(diag(A)))
-        obs.Hσ²L ./= σ²
+        mul!(obs.storage_qq_2, obs.ztz, L) # ZᵗZL
+        mul!(obs.storage_qq_3, obs.ztz, obs.LM⁻¹LᵗZᵗZ) # ZᵗZLM⁻¹LᵗZᵗZ
+        mul!(obs.storage_qq_4, obs.storage_qq_3, L) # ZᵗZLM⁻¹LᵗZᵗZL
+        mul!(obs.storage_qq_5, obs.storage_qq_3, obs.LM⁻¹LᵗZᵗZ) # ZᵗZLM⁻¹LᵗZᵗZLM⁻¹LᵗZᵗZ
+        mul!(obs.storage_qq_6, obs.storage_qq_5, L) # ZᵗZLM⁻¹LᵗZᵗZLM⁻¹LᵗZᵗZL
+        obs.Hσ²L .= obs.storage_qq_2 .- 2 .* obs.storage_qq_4 .+ obs.storage_qq_6
+        @inbounds for j in 1:(q - 1), i in (j + 1):q
+            obs.Hσ²L[i, j] += obs.Hσ²L[j, i]
+        end
+        obs.Hσ²L ./= (T(-1) * abs2(σ²))
+        # compute HLL
+        obs.storage_qq_5 .= obs.storage_qq_2 .- obs.storage_qq_4
+        kron!(obs.storage_qq2_1, transpose(obs.storage_qq_5), obs.storage_qq_5)
+        obs.storage_qq_5 .= obs.ztz .- obs.storage_qq_3
+        mul!(obs.storage_qq_3, transpose(L), obs.storage_qq_2) # LᵗZᵗZL
+        mul!(obs.storage_qq_6, transpose(L), obs.storage_qq_4) # LᵗZᵗZLM⁻¹LᵗZᵗZL
+        obs.storage_qq_4 .= obs.storage_qq_3 .- obs.storage_qq_6
+        kron!(obs.storage_qq2_2, obs.storage_qq_4, obs.storage_qq_5)
+        obs.storage_qq2_1 .+= obs.storage_qq2_2
+        D = duplication(q)
+        copy!(obs.HLL, transpose(D) * obs.storage_qq2_1 * D)
+        obs.HLL ./= (T(-1) * abs2(σ²))
         # compute Hσ²σ²
-        obs.Hσ²σ² ./= σ²
+        obs.Hσ²σ²[1] = n - 2 * tr(obs.LM⁻¹LᵗZᵗZ) + dot(transpose(obs.LM⁻¹LᵗZᵗZ), obs.LM⁻¹LᵗZᵗZ)
+        obs.Hσ²σ²[1] ./= (-2 * abs2(σ²))
     end
     logl
 end
@@ -116,19 +136,22 @@ function logl!(
     end
     @inbounds for i in 1:length(m.data)
         obs = m.data[i]
-        logl += logl!(obs, m.β, m.L, m.σ²[1], needgrad)
+        logl += logl!(obs, m.β, m.L, m.σ²[1], needgrad, needhess)
         if needgrad
             BLAS.axpy!(T(1), obs.∇β, m.∇β)
             BLAS.axpy!(T(1), obs.∇L, m.∇L)
             m.∇σ²[1] += obs.∇σ²[1]
         end
+        if needhess
+            BLAS.axpy!(T(1), obs.Hββ, m.Hββ)
+            BLAS.axpy!(T(1), obs.HLL, m.HLL)
+            BLAS.axpy!(T(1), obs.Hσ²L, m.Hσ²L)
+            m.Hσ²σ²[1] += obs.Hσ²σ²[1]
+        end    
     end
     # obtain gradient wrt L: m.∇L = m.∇L * L
     if needgrad
         BLAS.trmm!('R', 'L', 'N', 'N', T(1), m.L, m.∇L)
-    end
-    if needhess
-
     end
     logl
 end

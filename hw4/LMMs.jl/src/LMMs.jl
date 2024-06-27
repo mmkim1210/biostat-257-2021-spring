@@ -39,6 +39,15 @@ struct LmmObs{T <: AbstractFloat}
     ZᵗZLM⁻¹LᵗZᵗr  :: Vector{T}
     Zᵗr           :: Vector{T}
     ZᵗΩ⁻¹r        :: Vector{T}
+    storage_qp    :: Matrix{T}
+    storage_pp    :: Matrix{T}
+    storage_qq_2  :: Matrix{T}
+    storage_qq_3  :: Matrix{T}
+    storage_qq_4  :: Matrix{T}
+    storage_qq_5  :: Matrix{T}
+    storage_qq_6  :: Matrix{T}
+    storage_qq2_1 :: Matrix{T}
+    storage_qq2_2 :: Matrix{T}
 end
 
 """
@@ -72,33 +81,45 @@ function LmmObs(
     ZᵗZLM⁻¹LᵗZᵗr  = Vector{T}(undef, q)
     Zᵗr           = Vector{T}(undef, q)
     ZᵗΩ⁻¹r        = Vector{T}(undef, q)
+    storage_qp    = Matrix{T}(undef, q, p)
+    storage_pp    = Matrix{T}(undef, p, q)
+    storage_qq_2  = Matrix{T}(undef, q, q)
+    storage_qq_3  = Matrix{T}(undef, q, q)
+    storage_qq_4  = Matrix{T}(undef, q, q)
+    storage_qq_5  = Matrix{T}(undef, q, q)
+    storage_qq_6  = Matrix{T}(undef, q, q)
+    storage_qq2_1 = Matrix{T}(undef, abs2(q), abs2(q))
+    storage_qq2_2 = Matrix{T}(undef, abs2(q), abs2(q))
     LmmObs(y, X, Z, ∇β, ∇σ², ∇L, Hββ, HLL, Hσ²L, Hσ²σ²,
         yty, xty, zty, storage_p, storage_q, 
         xtx, ztx, ztz, storage_qq,
-        LM⁻¹LᵗZᵗZ, ZᵗZLM⁻¹LᵗZᵗr, Zᵗr, ZᵗΩ⁻¹r)
+        LM⁻¹LᵗZᵗZ, ZᵗZLM⁻¹LᵗZᵗr, Zᵗr, ZᵗΩ⁻¹r,
+        storage_qp, storage_pp, storage_qq_2, storage_qq_3,
+        storage_qq_4, storage_qq_5, storage_qq_6,
+        storage_qq2_1, storage_qq2_2)
 end
 
 struct LmmModel{T <: AbstractFloat} <: MOI.AbstractNLPEvaluator
     # data
-    data :: Vector{LmmObs{T}}
+    data        :: Vector{LmmObs{T}}
     # parameters
-    β    :: Vector{T}
-    L    :: Matrix{T}
-    σ²   :: Vector{T}
+    β           :: Vector{T}
+    L           :: Matrix{T}
+    σ²          :: Vector{T}
     # arrays for gradient
-    ∇β   :: Vector{T}
-    ∇σ²  :: Vector{T}
-    ∇L   :: Matrix{T}
+    ∇β          :: Vector{T}
+    ∇σ²         :: Vector{T}
+    ∇L          :: Matrix{T}
     # arrays for Hessian
-    Hββ        :: Matrix{T}
-    HLL        :: Matrix{T}
-    Hσ²L       :: Matrix{T}
-    Hσ²σ²      :: Vector{T}
+    Hββ         :: Matrix{T}
+    HLL         :: Matrix{T}
+    Hσ²L        :: Matrix{T}
+    Hσ²σ²       :: Vector{T}
     # working arrays
-    xty  :: Vector{T}
-    ztr2 :: Vector{T}
-    xtx  :: Matrix{T}
-    ztz2 :: Matrix{T}
+    xty         :: Vector{T}
+    ztr2        :: Vector{T}
+    xtx         :: Matrix{T}
+    ztz2        :: Matrix{T}
     storage_pp  :: Matrix{T}
     storage_qq2 :: Matrix{T}
     ztr         :: Vector{T}
@@ -112,30 +133,30 @@ Create an LMM model that contains data and parameters.
 """
 function LmmModel(obsvec::Vector{LmmObs{T}}) where T <: AbstractFloat
     # dims
-    p    = size(obsvec[1].X, 2)
-    q    = size(obsvec[1].Z, 2)
+    p             = size(obsvec[1].X, 2)
+    q             = size(obsvec[1].Z, 2)
     # parameters
-    β    = Vector{T}(undef, p)
-    L    = Matrix{T}(undef, q, q)
-    σ²   = Vector{T}(undef, 1)    
+    β             = Vector{T}(undef, p)
+    L             = Matrix{T}(undef, q, q)
+    σ²            = Vector{T}(undef, 1)    
     # gradients
-    ∇β   = similar(β)    
-    ∇σ²  = similar(σ²)
-    ∇L   = similar(L)
+    ∇β            = similar(β)    
+    ∇σ²           = similar(σ²)
+    ∇L            = similar(L)
     # Hessians
     Hββ           = Matrix{T}(undef, p, p)  
     HLL           = Matrix{T}(undef, ◺(q), ◺(q))
     Hσ²L          = Matrix{T}(undef, q, q)
     Hσ²σ²         = Vector{T}(undef, 1)
     # working arrays for initialization
-    xty  = Vector{T}(undef, p)
-    ztr2 = Vector{T}(undef, abs2(q))
-    xtx  = Matrix{T}(undef, p, p)
-    ztz2 = Matrix{T}(undef, abs2(q), abs2(q))
-    storage_pp = Matrix{T}(undef, p, p)
-    storage_qq2 = Matrix{T}(undef, abs2(q), abs2(q))
-    ztr         = Vector{T}(undef, q)
-    storage_qq  = Matrix{T}(undef, q, q)
+    xty           = Vector{T}(undef, p)
+    ztr2          = Vector{T}(undef, abs2(q))
+    xtx           = Matrix{T}(undef, p, p)
+    ztz2          = Matrix{T}(undef, abs2(q), abs2(q))
+    storage_pp    = Matrix{T}(undef, p, p)
+    storage_qq2   = Matrix{T}(undef, abs2(q), abs2(q))
+    ztr           = Vector{T}(undef, q)
+    storage_qq    = Matrix{T}(undef, q, q)
     LmmModel(obsvec, β, L, σ², ∇β, ∇σ², ∇L, Hββ, HLL, Hσ²L, Hσ²σ²,
         xty, ztr2, xtx, ztz2,
         storage_pp, storage_qq2, ztr, storage_qq)
