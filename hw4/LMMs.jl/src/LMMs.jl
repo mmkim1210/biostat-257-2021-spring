@@ -8,6 +8,7 @@ export LmmObs,
     init_ls!,
     fit!,
     ◺,
+    commutation,
     CopyMatrix
 
 const MOI = MathOptInterface

@@ -100,6 +100,9 @@ function logl!(
         # compute HLL
         obs.storage_qq_5 .= obs.storage_qq_2 .- obs.storage_qq_4
         kron!(obs.storage_qq2_1, transpose(obs.storage_qq_5), obs.storage_qq_5)
+        K = commutation(q)
+        mul!(obs.storage_qq2_2, obs.storage_qq2_1, K)
+        copy!(obs.storage_qq2_1, obs.storage_qq2_2)
         obs.storage_qq_5 .= obs.ztz .- obs.storage_qq_3
         BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qq_2) # LᵗZᵗZL
         BLAS.trmm!('L', 'L', 'T', 'N', T(1), L, obs.storage_qq_4) # LᵗZᵗZLM⁻¹LᵗZᵗZL
