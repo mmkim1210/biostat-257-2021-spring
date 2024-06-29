@@ -96,9 +96,6 @@ function logl!(
         copy!(obs.storage_qq_6, obs.storage_qq_5)
         BLAS.trmm!('R', 'L', 'N', 'N', T(1), L, obs.storage_qq_6) # ZᵗZLM⁻¹LᵗZᵗZLM⁻¹LᵗZᵗZL
         obs.Hσ²L .= obs.storage_qq_2 .- 2 .* obs.storage_qq_4 .+ obs.storage_qq_6
-        @inbounds for j in 1:(q - 1), i in (j + 1):q
-            obs.Hσ²L[i, j] += obs.Hσ²L[j, i]
-        end
         obs.Hσ²L ./= (T(-1) * abs2(σ²))
         # compute HLL
         obs.storage_qq_5 .= obs.storage_qq_2 .- obs.storage_qq_4
@@ -109,12 +106,12 @@ function logl!(
         obs.storage_qq_3 .= obs.storage_qq_2 .- obs.storage_qq_4
         kron!(obs.storage_qq2_2, obs.storage_qq_3, obs.storage_qq_5)
         obs.storage_qq2_1 .+= obs.storage_qq2_2
-        D = duplication(q)
-        copy!(obs.HLL, transpose(D) * obs.storage_qq2_1 * D)
+        C = CopyMatrix(q)
+        copy!(obs.HLL, transpose(C) * obs.storage_qq2_1 * C)
         obs.HLL ./= (T(-1) * abs2(σ²))
         # compute Hσ²σ²
         obs.Hσ²σ²[1] = n - 2 * tr(obs.LM⁻¹LᵗZᵗZ) + dot(transpose(obs.LM⁻¹LᵗZᵗZ), obs.LM⁻¹LᵗZᵗZ)
-        obs.Hσ²σ²[1] /= (-2 * abs2(σ²))
+        obs.Hσ²σ²[1] /= (T(-2) * abs2(σ²))
     end
     logl
 end

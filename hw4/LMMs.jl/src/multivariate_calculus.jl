@@ -54,3 +54,20 @@ function commutation(m::Int, n::Int)
 end
 
 commutation(m::Int) = commutation(m, m)
+
+struct CopyMatrix <: AbstractMatrix{Int}
+    n::Int
+end
+
+Base.size(C::CopyMatrix) = (abs2(C.n), (C.n * (C.n + 1)) >> 1)
+
+Base.IndexStyle(::Type{<:CopyMatrix}) = IndexCartesian()
+
+function Base.getindex(C::CopyMatrix, i::Int, j::Int)
+    r, c = CartesianIndices((1:C.n, 1:C.n))[i].I
+    if r ≥ c && j == (c - 1) * C.n - ((c - 2) * (c - 1)) >> 1 + r - c + 1
+        return 1
+    else
+        return 0
+    end
+end
